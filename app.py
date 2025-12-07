@@ -317,8 +317,8 @@ try:
      n_rows = meta.get("n_rows", None)
      if n_rows:
           st.caption(f"Model was trained on {n_rows} synthetic samples (prototype).")
-     except Exception:
-            pass
+except Exception:
+     pass
 
 # ---------------------------
 # Footer: dataset download (developer)
