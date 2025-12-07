@@ -311,13 +311,13 @@ st.warning("""
 - If in doubt, consult your local agricultural extension or a certified agronomist.
 """)
         # optional: show model confidence proxy (inverse of scaled RMSE if available)
-        try:
-            # load metrics if saved (not guaranteed)
-            meta = model_bundle.get("meta", {})
-            n_rows = meta.get("n_rows", None)
-            if n_rows:
-                st.caption(f"Model was trained on {n_rows} synthetic samples (prototype).")
-        except Exception:
+ try:
+     # load metrics if saved (not guaranteed)
+     meta = model_bundle.get("meta", {})
+     n_rows = meta.get("n_rows", None)
+     if n_rows:
+          st.caption(f"Model was trained on {n_rows} synthetic samples (prototype).")
+     except Exception:
             pass
 
 # ---------------------------
