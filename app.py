@@ -311,7 +311,7 @@ st.warning("""
 - If in doubt, consult your local agricultural extension or a certified agronomist.
 """)
         # optional: show model confidence proxy (inverse of scaled RMSE if available)
- try:
+try:
      # load metrics if saved (not guaranteed)
      meta = model_bundle.get("meta", {})
      n_rows = meta.get("n_rows", None)
