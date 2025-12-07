@@ -166,6 +166,78 @@ with st.sidebar.expander("Developer: create & train (password required)", expand
 # Show info about model status
 # ---------------------------
 st.subheader("Model status")
+# ---------------------------
+# REAL EXPERIMENT DATA UPLOAD
+# ---------------------------
+st.header("Upload Real Experimental Data (Optional)")
+
+real_data_file = st.file_uploader(
+    "Upload your REAL experiment CSV (same format as inputs + nano_amount_ml)",
+    type=["csv"]
+)
+
+real_df = None
+if real_data_file:
+    real_df = pd.read_csv(real_data_file)
+    st.subheader("Preview of Real Experimental Data")
+    st.dataframe(real_df.head())
+    st.success("Real experiment data loaded successfully ✅")
+# ---------------------------
+# TEST MODEL ON REAL DATA
+# ---------------------------
+if real_df is not None and model_bundle:
+    st.subheader("Test Model on Real Experimental Data")
+
+    test_btn = st.button("Test Model on Real Data")
+
+    if test_btn:
+        pipe = model_bundle["pipeline"]
+
+        X_real = real_df.drop(columns=["nano_amount_ml"])
+        y_real = real_df["nano_amount_ml"]
+
+        preds_real = pipe.predict(X_real)
+
+        mse_real = mean_squared_error(y_real, preds_real)
+        rmse_real = np.sqrt(mse_real)
+
+        st.success(f"✅ RMSE on REAL data: {rmse_real:.3f} ml")
+
+        real_df["Predicted_nano_ml"] = preds_real
+        st.subheader("Predictions vs Real Dosage")
+        st.dataframe(real_df.head(20))
+
+        st.download_button(
+            "Download Predictions CSV",
+            real_df.to_csv(index=False),
+            "real_predictions.csv",
+            "text/csv"
+        )
+# ---------------------------
+# RETRAIN USING REAL + SYNTHETIC DATA (DEV ONLY)
+# ---------------------------
+if real_df is not None:
+    st.subheader("Retrain Model with REAL + Synthetic Data")
+
+    retrain_btn = st.button("Retrain Model Using Real Data")
+
+    if retrain_btn:
+        if pw != DEV_PASSWORD:
+            st.error("❌ Developer password required to retrain.")
+        else:
+            st.info("Combining synthetic + real data and retraining...")
+
+            synthetic_df = generate_synthetic_dataset(n=2000)
+            combined_df = pd.concat([synthetic_df, real_df], ignore_index=True)
+
+            metrics = train_and_save_model(combined_df)
+
+            st.success("✅ Model retrained using REAL experimental data")
+            st.write(f"New RMSE: {metrics['rmse']:.3f} ml")
+            st.write(f"Rows used: {metrics['n_rows']}")
+
+            model_bundle = joblib.load(MODEL_PATH)
+
 if model_bundle:
     st.success(f"Trained model found ({model_bundle.get('meta',{}).get('n_rows','?')} synthetic rows).")
 else:
@@ -213,7 +285,18 @@ if submit:
         lower_bound = max(0.0, recommended * 0.4)
         upper_bound = recommended
         st.subheader("Recommendation (conservative)")
-        st.metric("Recommended nano dosage (ml per plant/plot)", f"{recommended:.3f} ml")
+        num_plants = st.number_input(
+    "Number of plants to treat",
+    min_value=1,
+    value=10,
+    step=1
+)
+
+total_dosage = recommended * num_plants
+
+st.metric("✅ Nano dosage per plant", f"{recommended:.3f} ml")
+st.metric("✅ Total nano dosage for all plants", f"{total_dosage:.3f} ml")
+
         st.write(f"Conservative safe cap for crop: {safe_cap} ml (prototype default)")
         st.write(f"Suggested safe range (prototype): {lower_bound:.3f} — {upper_bound:.3f} ml")
         st.write(f"Model raw prediction (before conservative clamping): {pred:.3f} ml")
