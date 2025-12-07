@@ -328,10 +328,7 @@ if submit:
             st.error(f"Prediction failed safely: {e}")
 
 
-total_dosage = recommended * num_plants
 
-st.metric("✅ Nano dosage per plant", f"{recommended:.3f} ml")
-st.metric("✅ Total nano dosage for all plants", f"{total_dosage:.3f} ml")
 st.write(f"Conservative safe cap for crop: {safe_cap} ml (prototype default)")
 st.write(f"Suggested safe range (prototype): {lower_bound:.3f} — {upper_bound:.3f} ml")
 st.write(f"Model raw prediction (before conservative clamping): {pred:.3f} ml")
