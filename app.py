@@ -265,32 +265,68 @@ if submit:
     if not model_bundle:
         st.error("No trained model available. Ask the developer to create & train the model (sidebar).")
     else:
-        pipe = model_bundle["pipeline"]
-        input_df = pd.DataFrame([{
-            "sunlight_hrs": sunlight_hrs,
-            "temp_c": temp_c,
-            "soil_ph": soil_ph,
-            "soil_moisture_pct": soil_moisture_pct,
-            "plant_age_days": int(plant_age_days),
-            "base_fertilizer_g": base_fertilizer_g,
-            "deficiency_score": int(deficiency_score),
-        }])
-        # raw prediction
-        pred = float(pipe.predict(input_df)[0])
-        # determine conservative safe cap for selected crop
-        safe_cap = SAFE_MAX_BY_CROP.get(crop, SAFE_MAX_BY_CROP["generic"])
-        # Clamp prediction
-        recommended = float(np.clip(pred, 0.0, safe_cap))
-        # Provide a conservative lower bound (e.g., 30% of recommended) and a small safety margin
-        lower_bound = max(0.0, recommended * 0.4)
-        upper_bound = recommended
-        st.subheader("Recommendation (conservative)")
-        num_plants = st.number_input(
-    "Number of plants to treat",
-    min_value=1,
-    value=10,
-    step=1
-)
+        try:
+            pipe = model_bundle["pipeline"]
+
+            input_df = pd.DataFrame([{
+                "sunlight_hrs": sunlight_hrs,
+                "temp_c": temp_c,
+                "soil_ph": soil_ph,
+                "soil_moisture_pct": soil_moisture_pct,
+                "plant_age_days": int(plant_age_days),
+                "base_fertilizer_g": base_fertilizer_g,
+                "deficiency_score": int(deficiency_score),
+            }])
+
+            # Raw prediction
+            pred = float(pipe.predict(input_df)[0])
+
+            # Conservative crop safety cap
+            safe_cap = SAFE_MAX_BY_CROP.get(crop, SAFE_MAX_BY_CROP["generic"])
+
+            # Clamp to safety
+            recommended = float(np.clip(pred, 0.0, safe_cap))
+
+            lower_bound = max(0.0, recommended * 0.4)
+            upper_bound = recommended
+
+            st.subheader("Recommendation (conservative)")
+
+            # ✅ NUMBER OF PLANTS — NOW IN THE CORRECT PLACE
+            num_plants = st.number_input(
+                "Number of plants to treat",
+                min_value=1,
+                value=10,
+                step=1
+            )
+
+            total_dosage = recommended * num_plants
+
+            st.metric("✅ Nano dosage per plant", f"{recommended:.3f} ml")
+            st.metric("✅ Total nano dosage for all plants", f"{total_dosage:.3f} ml")
+
+            st.write(f"Conservative safe cap for crop: {safe_cap} ml (prototype default)")
+            st.write(f"Suggested safe range (prototype): {lower_bound:.3f} — {upper_bound:.3f} ml")
+            st.write(f"Model raw prediction (before conservative clamping): {pred:.3f} ml")
+
+            st.warning("""
+**Safety & usage guidance (read carefully):**
+- This recommendation is a conservative, AI-assisted suggestion based on a synthetic dataset.
+- It does NOT replace the product label or expert agronomist advice.
+- Always test on a few plants before full application.
+- Do not exceed the conservative cap.
+- Wear gloves and a mask when applying fertilizer.
+""")
+
+            # Model info (safe display)
+            meta = model_bundle.get("meta", {})
+            n_rows = meta.get("n_rows", None)
+            if n_rows:
+                st.caption(f"Model was trained on {n_rows} synthetic samples (prototype).")
+
+        except Exception as e:
+            st.error(f"Prediction failed safely: {e}")
+
 
 total_dosage = recommended * num_plants
 
