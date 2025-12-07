@@ -119,7 +119,8 @@ def train_and_save_model(df, model_path=MODEL_PATH):
     X_train, X_test, y_train, y_test = train_test_split(X[num_cols], y, test_size=0.2, random_state=42)
     pipe.fit(X_train, y_train)
     preds = pipe.predict(X_test)
-    rmse = mean_squared_error(y_test, preds, squared=False)
+    rmse = np.sqrt(mean_squared_error(y_test, preds))
+
     mae = mean_absolute_error(y_test, preds)
     r2 = r2_score(y_test, preds)
     joblib.dump({"pipeline": pipe, "meta": {"n_rows": len(df)}}, model_path)
