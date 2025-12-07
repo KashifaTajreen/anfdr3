@@ -329,7 +329,7 @@ if submit:
 
 
 
-st.write(f"Conservative safe cap for crop: {safe_cap} ml (prototype default)")
+
 st.write(f"Suggested safe range (prototype): {lower_bound:.3f} — {upper_bound:.3f} ml")
 st.write(f"Model raw prediction (before conservative clamping): {pred:.3f} ml")
 # show explanation and guidance
