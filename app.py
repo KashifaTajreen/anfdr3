@@ -326,12 +326,7 @@ if submit:
 
         except Exception as e:
             st.error(f"Prediction failed safely: {e}")
-
-
-
-
-st.write(f"Suggested safe range (prototype): {lower_bound:.3f} — {upper_bound:.3f} ml")
-st.write(f"Model raw prediction (before conservative clamping): {pred:.3f} ml")
+            
 # show explanation and guidance
 st.warning("""
 **Safety & usage guidance (read carefully):**
